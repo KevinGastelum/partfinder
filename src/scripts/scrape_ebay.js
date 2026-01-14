@@ -33,22 +33,41 @@ async function scrapeEbay(query) {
     
     // Launch browser with stealth settings
     const browser = await puppeteer.launch({
-        headless: "new",
+        headless: false, // Changed to false to bypass bot detection
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--disable-gpu'
+            '--disable-blink-features=AutomationControlled',
+            '--window-size=1366,768',
+            '--disable-infobars',
+            '--excludeSwitches=enable-automation',
+            '--use-gl=swiftshader' // render on CPU to avoid GPU fingerprinting issues
         ]
     });
 
     const page = await browser.newPage();
     
-    // Set a realistic User Agent
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    // Mask webdriver explicitly
+    await page.evaluateOnNewDocument(() => {
+        Object.defineProperty(navigator, 'webdriver', {
+            get: () => false,
+        });
+    });
+
+    // Inject Cookies if available (Bypass CAPTCHA)
+    const cookiesPath = path.join(__dirname, '../data/ebay_cookies.json');
+    if (fs.existsSync(cookiesPath)) {
+        console.log("   🍪 Loading saved session cookies...");
+        const cookiesString = fs.readFileSync(cookiesPath);
+        const cookies = JSON.parse(cookiesString);
+        await page.setCookie(...cookies);
+    }
+
+    // Set a realistic User Agent (Matched to Browser Subagent)
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36');
+    await page.setExtraHTTPHeaders({
+        'Accept-Language': 'en-US,en;q=0.9'
+    });
     
     // Set viewport
     await page.setViewport({ width: 1366, height: 768 });
@@ -60,19 +79,22 @@ async function scrapeEbay(query) {
             const url = `https://www.ebay.com/sch/i.html?_nkw=${encodedQuery}&_pgn=${pageNum}`;
             console.log(`   Mining Page ${pageNum}... (${url})`);
             
-            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
             
             // Wait for items to likely be there
             try {
-                // Wait for either the item list or a potential captcha/error
-                await page.waitForSelector('.s-item', { timeout: 10000 });
+                // eBay changed from .s-item to .s-card (as of Jan 2026)
+                await page.waitForSelector('.s-card', { timeout: 30000 });
             } catch (e) {
-                console.log("   ⚠️  Timed out waiting for .s-item. Checking for bot detection...");
+                console.log("   ⚠️  Timed out waiting for .s-card. Checking for bot detection...");
                 const content = await page.content();
+                fs.writeFileSync(path.join(__dirname, '../../debug_last_page.html'), content); // Save HTML for inspection
+                console.log("   💾 Saved page content to: debug_last_page.html");
+
                 if (content.includes('security check') || content.includes('captcha')) {
                     console.error("   ❌ Hit eBay CAPTCHA/Bot protection.");
                 } else {
-                    console.log("   ❌ Unknown page state. Saving screenshot.");
+                    console.log("   ❌ Unknown page state. Check the debug HTML file.");
                 }
                 await page.screenshot({ path: path.join(__dirname, '../../debug_scrape_fail.png') });
                 break;
@@ -97,36 +119,41 @@ async function scrapeEbay(query) {
             });
             await sleep(1000);
 
-            // Extract items in browser context
+            // Extract items in browser context (Updated for .s-card structure)
             const items = await page.evaluate(() => {
                 const results = [];
-                const itemEls = document.querySelectorAll('.s-item');
+                const itemEls = document.querySelectorAll('.s-card');
                 
                 itemEls.forEach(el => {
-                    const titleEl = el.querySelector('.s-item__title');
-                    const priceEl = el.querySelector('.s-item__price');
-                    const linkEl = el.querySelector('.s-item__link');
-                    const imageEl = el.querySelector('.s-item__image-img');
-                    const sellerEl = el.querySelector('.s-item__seller-info-text');
-                    const conditionEl = el.querySelector('.SECONDARY_INFO');
-
+                    const titleEl = el.querySelector('.s-card__title span') || el.querySelector('.s-card__title');
+                    const linkEl = el.querySelector('a.s-card__link') || el.querySelector('a');
+                    const imageEl = el.querySelector('img');
+                    
                     const title = titleEl ? titleEl.innerText.trim() : null;
                     if (!title || title.toLowerCase() === 'shop on ebay') return;
 
-                    const priceText = priceEl ? priceEl.innerText : null;
-                    // Generic price regex
-                    const priceMatch = priceText ? priceText.match(/[\d,]+\.\d{2}/) : null;
-                    const price = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : null;
+                    // Extract price from text content
+                    const cardText = el.innerText || '';
+                    const priceMatch = cardText.match(/\$[\d,]+\.?\d*/);
+                    const priceText = priceMatch ? priceMatch[0] : null;
+                    const price = priceText ? parseFloat(priceText.replace(/[$,]/g, '')) : null;
 
                     if (!price) return;
+
+                    // Try to find seller info
+                    const sellerMatch = cardText.match(/\([\d,]+\)/);
+                    const store = sellerMatch ? 'eBay Seller' : 'eBay Seller';
+                    
+                    // Condition detection
+                    const condition = cardText.toLowerCase().includes('new') ? 'New' : 'Used';
 
                     results.push({
                         title,
                         price,
                         link: linkEl ? linkEl.href : null,
                         image_url: imageEl ? imageEl.src : null,
-                        store: sellerEl ? sellerEl.innerText.trim().split(' ')[0] : 'eBay Seller',
-                        condition: conditionEl ? conditionEl.innerText.trim() : 'Used' // Default to used if not specified
+                        store,
+                        condition
                     });
                 });
                 return results;

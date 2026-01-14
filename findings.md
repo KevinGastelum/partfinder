@@ -48,6 +48,59 @@ To maintain a clean codebase, files have been reorganized:
 *   `src/scripts/`: Contains the database seeding script (`seed_supabase_script.js`).
 
 ## Next Steps
-1.  Obtain `SUPABASE_SERVICE_ROLE_KEY`.
-2.  Update `.env` or the seeding script.
-3.  Run `node src/scripts/seed_supabase_script.js` to populate the database.
+1.  ~~Obtain `SUPABASE_SERVICE_ROLE_KEY`.~~ ✅
+2.  ~~Update `.env` or the seeding script.~~ ✅
+3.  ~~Run `node src/scripts/seed_supabase_script.js` to populate the database.~~ ✅
+
+---
+
+## 5. Challenge: Mass Inventory Scraping (Jan 2026)
+
+### Goal
+Automate scraping across a matrix of **5 Vehicles × 5 Parts** (25 total queries) to expand the catalog to ~1,000+ listings.
+
+### Orchestration
+Created `src/scripts/seed_inventory.js` to loop through vehicle-part combinations and spawn `scrape_ebay.js` for each query sequentially with a 5-second cooldown.
+
+### Issues Encountered
+
+#### 5.1 Query Argument Truncation
+*   **Symptom**: Scraper received only the first word (e.g., `"2018"` instead of `"2018 Honda Civic Brake Pads"`).
+*   **Cause**: Windows shell tokenized the query string on spaces.
+*   **Fix**: Wrapped query in escaped quotes in `spawn()` call: `[SCRAPER_SCRIPT, \`"${query}"\`]`.
+
+#### 5.2 eBay Bot Detection (CAPTCHA/OTP)
+*   **Symptom**: Scraper hit "Checking your browser" or security verification screens.
+*   **Initial Attempts**:
+    *   Switched to `headless: false` (visible browser).
+    *   Updated User-Agent to match Browser Subagent's verified UA (`Chrome/143`).
+    *   Added `--disable-blink-features=AutomationControlled` flag.
+    *   Masked `navigator.webdriver` via `page.evaluateOnNewDocument()`.
+*   **Successful Mitigation**: Created `src/scripts/get_cookies.js` to manually capture session cookies, then injected them in `scrape_ebay.js` via `page.setCookie()`.
+
+#### 5.3 Empty HTML Dump (Timing Issue)
+*   **Symptom**: Debug HTML file contained eBay's UI shell (CSS variables, `ifh-` help components) but **no listing content** ("Alternator", "$103.49" not found).
+*   **Cause**: `waitUntil: 'domcontentloaded'` returned before JavaScript rendered the results.
+*   **Fix**: Changed to `waitUntil: 'networkidle0'` to wait for all network activity to cease (full page render).
+
+### Current Status
+✅ **Resolved.** Mass scraper is now working successfully.
+
+#### 5.4 DOM Structure Change (Critical Fix)
+*   **Symptom**: Scraper waited for `.s-item` but never found it, even on pages with visible listings.
+*   **Diagnosis**: Used Browser Subagent to inspect live DOM. Found `.s-item` count = **0**, but `.s-card` count = **70**.
+*   **Cause**: eBay updated their search results page structure (Jan 2026). Listings are now wrapped in `.s-card` instead of `.s-item`.
+*   **Fix**: Updated `scrape_ebay.js`:
+    *   Selector: `.s-item` → `.s-card`
+    *   Title: `.s-item__title` → `.s-card__title span`
+    *   Link: `.s-item__link` → `a.s-card__link`
+    *   Price: Extracted via regex from card text content
+    *   Condition: Detected via text matching ("new" → New, else Used)
+
+### Files Created/Modified
+*   `src/scripts/seed_inventory.js` – Orchestrator for mass scraping.
+*   `src/scripts/get_cookies.js` – Manual cookie capture utility.
+*   `src/scripts/inspect_debug.js` – DOM inspection helper.
+*   `src/scripts/scrape_ebay.js` – Updated with cookie injection, UA, stealth flags, and `networkidle0`.
+*   `src/data/ebay_cookies.json` – Stored session cookies (gitignored).
+*   `debug_last_page.html` – HTML dump for troubleshooting.

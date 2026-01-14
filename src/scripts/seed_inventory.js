@@ -27,7 +27,7 @@ async function runScraper(query) {
     return new Promise((resolve, reject) => {
         console.log(`\n📦 Orchestrator: Queuing scrape for "${query}"...`);
         
-        const child = spawn('node', [SCRAPER_SCRIPT, query], {
+        const child = spawn('node', [SCRAPER_SCRIPT, `"${query}"`], {
             stdio: 'inherit', // Pipe output to parent console
             shell: true
         });
