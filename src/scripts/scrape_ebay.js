@@ -203,4 +203,10 @@ ${sqlValues};
 }
 
 const queryArg = process.argv[2] || DEFAULT_SEARCH;
-scrapeEbay(queryArg);
+
+// Only run if called directly (node scrape_ebay.js)
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    scrapeEbay(queryArg);
+}
+
+export { scrapeEbay };

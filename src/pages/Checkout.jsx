@@ -1,17 +1,94 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import './Checkout.css';
 
-const SERVICE_FEE_PERCENTAGE = 0.30;
-const SHIPPING_COST_DEFAULT = 15.00;
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
+const CheckoutForm = ({ clientSecret, amount, cart, shippingDetails }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [message, setMessage] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const navigate = useNavigate();
+  const { clearCart } = useCart();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setIsProcessing(true);
+
+    const { error, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/`, // Redirects to home after success (or handle locally)
+      },
+      redirect: "if_required", // Prevent redirect if handled locally
+    });
+
+    if (error) {
+      setMessage(error.message);
+      setIsProcessing(false);
+    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+      
+      // Payment Successful - Create Order
+      try {
+        const { data, error: dbError } = await supabase
+        .from('orders')
+        .insert([
+          {
+            user_email: shippingDetails.email,
+            listing_id: cart[0].id, 
+            status: 'paid',
+            stripe_payment_id: paymentIntent.id,
+            shipping_address: shippingDetails,
+            item_price: amount.itemTotal, // We need to pass broken down costs or re-calc
+            service_fee: amount.serviceFee,
+            shipping_cost: amount.shipping,
+            total_amount: amount.grandTotal
+          }
+        ]);
+
+        if (dbError) throw dbError;
+
+        alert(`Payment Succeeded! Order created.`);
+        clearCart();
+        navigate('/');
+
+      } catch (err) {
+        console.error("Order creation failed after payment:", err);
+        setMessage("Payment succeeded but order creation failed. Please contact support.");
+      }
+      
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <form id="payment-form" onSubmit={handleSubmit}>
+      <PaymentElement />
+      {message && <div id="payment-message" style={{color: 'red', marginTop: '10px'}}>{message}</div>}
+      <button disabled={isProcessing || !stripe || !elements} id="submit" className="btn-pay" style={{marginTop: '20px'}}>
+        <span id="button-text">
+          {isProcessing ? "Processing..." : `Pay $${amount.grandTotal.toFixed(2)}`}
+        </span>
+      </button>
+    </form>
+  );
+};
 
 export default function Checkout() {
-  const { cart, getCartTotal, clearCart } = useCart();
+  const { cart, getCartTotal } = useCart();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [clientSecret, setClientSecret] = useState("");
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -22,59 +99,39 @@ export default function Checkout() {
   });
 
   const cartTotal = getCartTotal();
-  const serviceFee = cartTotal * SERVICE_FEE_PERCENTAGE;
-  const shipping = SHIPPING_COST_DEFAULT;
+  const serviceFee = cartTotal * 0.30;
+  const shipping = 15.00;
   const grandTotal = cartTotal + serviceFee + shipping;
+
+  useEffect(() => {
+    if (cart.length === 0) return;
+
+    // Fetch PaymentIntent from backend
+    // Note: In local dev, you must serve the Function or use a placeholder if you can't run Deno.
+    // For this environment, we assume the user will deploy or run it. 
+    // If we can't run it, we might need to Mock it or use a public URL.
+    // Let's assume standard Supabase Function invocation:
+    
+    const fetchPaymentIntent = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+          body: { cartItems: cart.map(item => ({ id: item.id })) }
+        });
+
+        if (error) console.error('Error creating payment intent:', error);
+        if (data?.clientSecret) {
+            setClientSecret(data.clientSecret);
+        }
+      } catch (err) {
+        console.error("Function invoke error:", err);
+      }
+    };
+
+    fetchPaymentIntent();
+  }, [cart]);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handlePayment = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // 1. Placeholder for Stripe Payment Intent creation & confirmation
-      const simulatedPaymentId = 'pi_simulated_' + Math.random().toString(36).substr(2, 9);
-
-      // 2. Create Order in Supabase
-      const { data, error } = await supabase
-        .from('orders')
-        .insert([
-          {
-            user_email: formData.email,
-            // For MVP, if multiple items, we might need multiple order rows or a jsonb column.
-            // Our schema has `listing_id` (single). Let's assume 1 item for now or just pick the first one.
-            listing_id: cart[0].id, 
-            status: 'paid', // Immediately paid since we simulated it
-            stripe_payment_id: simulatedPaymentId,
-            shipping_address: formData,
-            item_price: cartTotal,
-            service_fee: serviceFee,
-            shipping_cost: shipping,
-            total_amount: grandTotal
-          }
-        ])
-        .select();
-
-      if (error) throw error;
-
-      console.log('Order created:', data);
-
-      // Simulate Network Delay for "Payment Processing"
-      setTimeout(() => {
-        alert(`Payment Successful! Order ID: ${data[0].id}\nTotal: $${grandTotal.toFixed(2)}`);
-        clearCart();
-        setLoading(false);
-        navigate('/');
-      }, 1500);
-
-    } catch (err) {
-      console.error('Payment/Order Error:', err);
-      alert('Payment failed: ' + err.message);
-      setLoading(false);
-    }
   };
 
   if (cart.length === 0) {
@@ -86,21 +143,29 @@ export default function Checkout() {
     );
   }
 
+  const appearance = {
+    theme: 'stripe',
+  };
+  const options = {
+    clientSecret,
+    appearance,
+  };
+
   return (
     <div className="checkout-container">
       <h1>Checkout</h1>
       
       <div className="checkout-grid">
-        {/* Shipping Form */}
+        {/* Shipping Form (Collection Only) */}
         <div className="form-section">
           <h2>Shipping Information</h2>
-          <form id="checkout-form" onSubmit={handlePayment}>
+          <form>
             <div className="form-group">
               <label>Full Name</label>
               <input type="text" name="name" required value={formData.name} onChange={handleInputChange} placeholder="John Doe" />
             </div>
-            
-            <div className="form-group">
+            {/* ... other fields ... */}
+             <div className="form-group">
               <label>Email Address</label>
               <input type="email" name="email" required value={formData.email} onChange={handleInputChange} placeholder="john@example.com" />
             </div>
@@ -127,10 +192,11 @@ export default function Checkout() {
           </form>
         </div>
 
-        {/* Order Summary */}
+        {/* Order Summary & Payment */}
         <div className="summary-section">
           <h2>Order Summary</h2>
-          <div className="cart-items">
+          {/* ... Summary Logic ... */}
+           <div className="cart-items">
             {cart.map((item, index) => (
               <div key={index} className="summary-item">
                 <img src={item.image} alt={item.title} className="summary-thumb" />
@@ -149,7 +215,7 @@ export default function Checkout() {
             </div>
             <div className="cost-row">
               <span>Service Fee</span>
-              <span>${serviceFee.toFixed(2)}</span>
+              <span>${(grandTotal - cartTotal - shipping).toFixed(2)}</span>
             </div>
             <div className="cost-row">
               <span>Shipping (Est.)</span>
@@ -161,21 +227,20 @@ export default function Checkout() {
             </div>
           </div>
 
-          <div className="payment-placeholder">
-            {/* Stripe Element would go here */}
-            <div className="mock-card-element">
-              💳 Credit Card Element (Stripe Placeholder)
-            </div>
+          <div className="payment-placeholder" style={{marginTop: '20px'}}>
+             {clientSecret ? (
+                <Elements options={options} stripe={stripePromise}>
+                  <CheckoutForm 
+                    clientSecret={clientSecret} 
+                    amount={{itemTotal: cartTotal, serviceFee: serviceFee, shipping: shipping, grandTotal: grandTotal}} 
+                    cart={cart}
+                    shippingDetails={formData}
+                  />
+                </Elements>
+              ) : (
+                <div style={{textAlign: 'center', padding: '20px'}}>Loading Payment Securely...<br/><small>(Ensure Supabase Edge Function is running)</small></div>
+              )}
           </div>
-
-          <button 
-            type="submit" 
-            form="checkout-form" 
-            className="btn-pay"
-            disabled={loading}
-          >
-            {loading ? 'Processing...' : `Pay $${grandTotal.toFixed(2)}`}
-          </button>
         </div>
       </div>
     </div>

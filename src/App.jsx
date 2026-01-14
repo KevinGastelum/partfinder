@@ -7,6 +7,7 @@ import Results from './pages/Results'
 
 import { CartProvider } from './context/CartContext'
 import Checkout from './pages/Checkout'
+import Admin from './pages/Admin'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/results" element={<Results />} />
             <Route path="/product/:id" element={<Product />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </Layout>
       </BrowserRouter>

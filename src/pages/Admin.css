@@ -1,0 +1,77 @@
+
+.admin-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+    color: var(--text-primary);
+}
+
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.orders-table th, 
+.orders-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.orders-table th {
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+    color: var(--color-white);
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.badge-paid {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+}
+
+.badge-fulfilling {
+    background: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+}
+
+.badge-shipped {
+    background: rgba(155, 89, 182, 0.2);
+    color: #9b59b6;
+}
+
+.badge-failed {
+    background: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+}
+
+.error-msg {
+    font-size: 0.75rem;
+    color: #e74c3c;
+    margin-top: 4px;
+    max-width: 200px;
+}
+
+.btn-retry {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.btn-retry:hover {
+    background: var(--color-primary-hover);
+}
