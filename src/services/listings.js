@@ -12,20 +12,19 @@ export const searchListings = async ({ year, make, model, part }) => {
     .select('*')
     .order('price', { ascending: true });
 
+  // Year search: Match exact year column OR find year in title (handles "2012-2017" ranges)
   if (year) {
-    query = query.eq('year', year);
+    query = query.or(`year.eq.${year},title.ilike.%${year}%`);
   }
   if (make) {
-    query = query.ilike('make', make); // Case insensitive
+    query = query.ilike('make', make);
   }
   if (model) {
-    // Heuristic: Dropdowns give "Civic Base", but DB might just have "Civic"
-    // Search for the first part of the model string
     const coreModel = model.split(' ')[0]; 
     query = query.ilike('model', `%${coreModel}%`); 
   }
   if (part) {
-    query = query.ilike('part_name', `%${part}%`); // Partial match
+    query = query.ilike('part_name', `%${part}%`);
   }
 
   const { data, error } = await query;

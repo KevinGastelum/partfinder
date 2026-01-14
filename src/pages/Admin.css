@@ -1,11 +1,42 @@
 
 .admin-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 40px auto;
     padding: 20px;
     color: var(--text-primary);
 }
 
+/* Tabs */
+.admin-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 16px;
+}
+
+.admin-tabs .tab {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-primary);
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.admin-tabs .tab:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.admin-tabs .tab.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+/* Orders Table */
 .orders-table {
     width: 100%;
     border-collapse: collapse;
@@ -35,25 +66,10 @@
     text-transform: capitalize;
 }
 
-.badge-paid {
-    background: rgba(46, 204, 113, 0.2);
-    color: #2ecc71;
-}
-
-.badge-fulfilling {
-    background: rgba(52, 152, 219, 0.2);
-    color: #3498db;
-}
-
-.badge-shipped {
-    background: rgba(155, 89, 182, 0.2);
-    color: #9b59b6;
-}
-
-.badge-failed {
-    background: rgba(231, 76, 60, 0.2);
-    color: #e74c3c;
-}
+.badge-paid { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+.badge-fulfilling { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+.badge-shipped { background: rgba(155, 89, 182, 0.2); color: #9b59b6; }
+.badge-failed { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
 
 .error-msg {
     font-size: 0.75rem;
@@ -75,3 +91,336 @@
 .btn-retry:hover {
     background: var(--color-primary-hover);
 }
+
+/* Inventory Dashboard */
+.inventory-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(52, 152, 219, 0.05));
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+
+.stat-card.warning {
+    background: linear-gradient(135deg, rgba(241, 196, 15, 0.2), rgba(241, 196, 15, 0.05));
+    border-color: rgba(241, 196, 15, 0.3);
+}
+
+.stat-card.danger {
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), rgba(231, 76, 60, 0.05));
+    border-color: rgba(231, 76, 60, 0.3);
+}
+
+.stat-card h3 {
+    margin: 0 0 8px;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-white);
+}
+
+.charts-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+.chart-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.chart-card h3 {
+    margin: 0 0 16px;
+    font-size: 1rem;
+}
+
+.stat-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.stat-list li {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.stat-list .label {
+    flex: 1;
+    font-size: 0.9rem;
+    z-index: 1;
+}
+
+.stat-list .count {
+    font-weight: 600;
+    margin-left: 12px;
+    z-index: 1;
+}
+
+.stat-list .bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(52, 152, 219, 0.15);
+    border-radius: 4px;
+    z-index: 0;
+}
+
+.stat-list .bar.part-bar {
+    background: rgba(46, 204, 113, 0.15);
+}
+
+/* Alert Sections */
+.alert-section {
+    background: rgba(241, 196, 15, 0.05);
+    border: 1px solid rgba(241, 196, 15, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.alert-section.danger {
+    background: rgba(231, 76, 60, 0.05);
+    border-color: rgba(231, 76, 60, 0.2);
+}
+
+.alert-section h3 {
+    margin: 0 0 12px;
+}
+
+.alert-section p {
+    margin: 0 0 12px;
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+.mini-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.mini-table th,
+.mini-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.mini-table th {
+    background: rgba(255,255,255,0.05);
+    font-weight: 600;
+}
+
+/* Clickable List Items */
+.stat-list.clickable li {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.stat-list.clickable li:hover {
+    background: rgba(255,255,255,0.05);
+    padding-left: 8px;
+}
+
+.stat-list.clickable li.selected {
+    background: rgba(52, 152, 219, 0.2);
+    border-left: 3px solid var(--color-primary);
+    padding-left: 12px;
+}
+
+.hint {
+    font-size: 0.75rem;
+    opacity: 0.5;
+    font-weight: normal;
+}
+
+/* Filter Breadcrumb */
+.filter-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(52, 152, 219, 0.2);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.filter-tag {
+    background: var(--color-primary);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.filter-tag:hover {
+    opacity: 0.8;
+}
+
+.clear-filters {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--text-primary);
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.clear-filters:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Listings Table */
+.listings-section {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.listings-section h3 {
+    margin: 0 0 16px;
+}
+
+.listings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.listings-table th,
+.listings-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.listings-table th {
+    background: rgba(255,255,255,0.05);
+    font-weight: 600;
+}
+
+.listings-table a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.listings-table a:hover {
+    text-decoration: underline;
+}
+
+/* Info stat card */
+.stat-card.info {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(52, 152, 219, 0.05));
+    border-color: rgba(52, 152, 219, 0.3);
+}
+
+/* Price Range in parts list */
+.price-range {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    margin-left: 4px;
+}
+
+/* Price Outliers */
+.price-outlier-high {
+    background: rgba(231, 76, 60, 0.1) !important;
+}
+
+.price-outlier-low {
+    background: rgba(46, 204, 113, 0.1) !important;
+}
+
+.outlier-badge {
+    margin-left: 6px;
+    font-size: 0.9rem;
+}
+
+.outlier-badge.high { color: #e74c3c; }
+.outlier-badge.low { color: #2ecc71; }
+
+/* Action Buttons */
+.btn-delete {
+    background: transparent;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    color: #e74c3c;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.btn-delete:hover {
+    background: rgba(231, 76, 60, 0.2);
+}
+
+.btn-cleanup {
+    background: rgba(241, 196, 15, 0.2);
+    border: 1px solid rgba(241, 196, 15, 0.4);
+    color: #f1c40f;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.btn-cleanup:hover {
+    background: rgba(241, 196, 15, 0.3);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.section-header h3 {
+    margin: 0;
+}
+
+.btn-cleanup-all {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.btn-cleanup-all:hover {
+    opacity: 0.9;
+}
+
+
+
