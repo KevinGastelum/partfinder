@@ -46,9 +46,13 @@ export default function Admin() {
   const fetchInventory = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
+      // Fetch up to 50,000 rows (Supabase default limit is 1000)
+      const { data, error } = await supabase
         .from('listings')
-        .select('id, make, model, part_name, title, price, link, created_at');
+        .select('id, make, model, part_name, title, price, link, created_at')
+        .limit(50000);
+      
+      if (error) throw error;
       setAllListings(data || []);
     } catch (err) {
       console.error("Error fetching inventory:", err);
