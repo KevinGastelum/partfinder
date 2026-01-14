@@ -1,0 +1,74 @@
+
+.search-container {
+  padding: 24px;
+  width: 100%;
+}
+
+.search-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
+.input-field {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.search-btn {
+  margin-top: 8px;
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  font-size: 1.1rem;
+}
+
+/* Tablet & Desktop */
+@media (min-width: 768px) {
+  .search-form {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .search-btn {
+    grid-column: span 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .search-form {
+    grid-template-columns: repeat(4, 1fr) auto;
+    align-items: end;
+  }
+  
+  .search-btn {
+    grid-column: auto;
+    margin-top: 0;
+    height: 46px; /* Match input height roughly */
+  }
+}

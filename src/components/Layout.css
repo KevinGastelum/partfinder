@@ -1,0 +1,106 @@
+
+/* Layout.css styles for Layout component */
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  margin: 0 8px; /* Floating header look on mobile */
+  top: 8px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.nav-desktop {
+  display: none;
+}
+
+.main-content {
+  margin-top: 80px; /* Header height + spacing */
+  margin-bottom: 80px; /* Mobile nav height + spacing */
+  padding: 0 8px;
+  flex: 1;
+}
+
+.mobile-nav {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  height: 64px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 50;
+  background: rgba(20, 20, 25, 0.9); /* Slightly more opaque */
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-item.active {
+  color: var(--primary);
+}
+
+.nav-item .icon {
+  font-size: 1.2rem;
+}
+
+.nav-item .label {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Desktop styles */
+@media (min-width: 768px) {
+  .header {
+    margin: 0;
+    border-radius: 0;
+    top: 0;
+    padding: 0 24px;
+  }
+  
+  .nav-desktop {
+    display: flex;
+    gap: 16px;
+  }
+  
+  .mobile-nav {
+    display: none;
+  }
+  
+  .main-content {
+    margin-bottom: 0;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 24px;
+  }
+}
