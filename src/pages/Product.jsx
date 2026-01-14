@@ -1,12 +1,15 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getListingById } from '../services/listings';
+import { useCart } from '../context/CartContext';
 import { ArrowLeft, ExternalLink, ShieldCheck, Truck } from 'lucide-react';
 import './Product.css';
 
 const Product = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -52,6 +55,7 @@ const Product = () => {
             </p>
           </div>
 
+
           <div className="pricing-card">
             <div className="price-row">
               <span>Part Price</span>
@@ -66,26 +70,21 @@ const Product = () => {
               <span>Total</span>
               <span className="text-gradient">${totalPrice}</span>
             </div>
+
+            <button 
+              className="btn btn-primary buy-btn-large"
+              style={{ marginTop: '20px', width: '100%', cursor: 'pointer' }}
+              onClick={() => {
+                addToCart({ ...listing, serviceFee: parseFloat(listing.serviceFee) });
+                navigate('/checkout');
+              }}
+            >
+              Add to Cart & Checkout
+            </button>
           </div>
 
-          <div className="trust-badges">
-            <div className="badge-item">
-              <ShieldCheck className="icon-success" />
-              <span>Verified Seller</span>
-            </div>
-            <div className="badge-item">
-              <Truck className="icon-primary" />
-              <span>Fast Shipping Available</span>
-            </div>
-          </div>
-
-          <a href={listing.link} target="_blank" rel="noopener noreferrer" className="btn btn-primary buy-btn-large">
-            <span>Proceed to Checkout</span>
-            <ExternalLink size={20} />
-          </a>
-          
-          <p className="disclaimer">
-            * You will be redirected to {listing.store} to complete your purchase.
+          <p className="disclaimer" style={{ marginTop: '1rem', opacity: 0.7 }}>
+            * This will add the item to your PartFinder cart.
           </p>
         </div>
       </div>

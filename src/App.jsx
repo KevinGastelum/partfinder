@@ -5,17 +5,23 @@ import Home from './pages/Home'
 import Product from './pages/Product'
 import Results from './pages/Results'
 
+import { CartProvider } from './context/CartContext'
+import Checkout from './pages/Checkout'
+
 function App() {
   return (
-    <BrowserRouter>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/results" element={<Results />} />
-          <Route path="/product/:id" element={<Product />} />
-        </Routes>
-      </Layout>
-    </BrowserRouter>
+    <CartProvider>
+      <BrowserRouter>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/results" element={<Results />} />
+            <Route path="/product/:id" element={<Product />} />
+            <Route path="/checkout" element={<Checkout />} />
+          </Routes>
+        </Layout>
+      </BrowserRouter>
+    </CartProvider>
   )
 }
 

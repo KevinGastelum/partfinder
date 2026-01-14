@@ -1,0 +1,148 @@
+
+.checkout-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  color: white;
+}
+
+.checkout-empty {
+  text-align: center;
+  padding: 100px 20px;
+}
+
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 40px;
+  margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+  .checkout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-section, .summary-section {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 30px;
+  border-radius: 16px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #a0a0b0;
+  font-size: 0.9rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 15px;
+}
+
+.cart-items {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding-right: 10px;
+}
+
+.summary-item {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.summary-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.summary-details p {
+  margin: 0;
+}
+
+.summary-title {
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.summary-price {
+  font-weight: bold;
+  color: #bf5af2;
+}
+
+.cost-breakdown {
+  margin-top: 20px;
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+  padding-top: 20px;
+}
+
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  color: #ccc;
+}
+
+.cost-row.total {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: white;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.payment-placeholder {
+  margin: 20px 0;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  text-align: center;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.btn-pay {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(90deg, #5e5ce6, #bf5af2);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-pay:hover {
+  opacity: 0.9;
+}
+
+.btn-pay:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

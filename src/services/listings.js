@@ -19,7 +19,10 @@ export const searchListings = async ({ year, make, model, part }) => {
     query = query.ilike('make', make); // Case insensitive
   }
   if (model) {
-    query = query.ilike('model', `%${model}%`); // Partial match
+    // Heuristic: Dropdowns give "Civic Base", but DB might just have "Civic"
+    // Search for the first part of the model string
+    const coreModel = model.split(' ')[0]; 
+    query = query.ilike('model', `%${coreModel}%`); 
   }
   if (part) {
     query = query.ilike('part_name', `%${part}%`); // Partial match
