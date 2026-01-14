@@ -41,6 +41,14 @@
   box-shadow: 0 0 0 2px var(--primary-glow);
 }
 
+/* Fix for dropdown options to match theme */
+select option {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: 'Outfit', sans-serif;
+  padding: 10px;
+}
+
 .search-btn {
   margin-top: 8px;
   width: 100%;

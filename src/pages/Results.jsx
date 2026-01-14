@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ListingCard from '../components/ListingCard';
-import { searchParts } from '../services/mockScraper';
+import { searchListings } from '../services/listings';
 
 const Results = () => {
   const [searchParams] = useSearchParams();
@@ -20,7 +20,7 @@ const Results = () => {
     const fetchResults = async () => {
       setLoading(true);
       try {
-        const data = await searchParts(criteria);
+        const data = await searchListings(criteria);
         setResults(data);
       } catch (error) {
         console.error("Failed to fetch", error);

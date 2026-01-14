@@ -1,0 +1,144 @@
+
+.product-page {
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: var(--primary);
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  overflow: hidden;
+}
+
+.product-image-container {
+  position: relative;
+  background: #202025;
+  height: 300px;
+}
+
+.product-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Store images might vary in aspect ratio */
+  padding: 20px;
+}
+
+.product-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: var(--primary);
+    color: white;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+}
+
+.product-details {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.product-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.product-subtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.pricing-card {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.price-row.total {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0;
+}
+
+.price-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 12px 0;
+}
+
+.trust-badges {
+  display: flex;
+  gap: 20px;
+  padding: 10px 0;
+}
+
+.badge-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.icon-success { color: var(--success); }
+.icon-primary { color: var(--primary); }
+
+.buy-btn-large {
+  width: 100%;
+  padding: 16px;
+  font-size: 1.1rem;
+  gap: 12px;
+}
+
+.disclaimer {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Desktop */
+@media (min-width: 768px) {
+  .product-grid {
+    grid-template-columns: 1fr 1fr;
+    min-height: 500px;
+  }
+
+  .product-image-container {
+    height: 100%;
+    border-right: var(--glass-border);
+  }
+  
+  .product-details {
+    padding: 40px;
+  }
+}

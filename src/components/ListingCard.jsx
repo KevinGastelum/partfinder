@@ -1,7 +1,7 @@
-
 import React from 'react';
 import './ListingCard.css';
 import { ExternalLink, Tag } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const ListingCard = ({ listing }) => {
   const { title, price, store, condition, image, link, serviceFee } = listing;
@@ -28,10 +28,10 @@ const ListingCard = ({ listing }) => {
             <div className="total-price">${totalPrice}</div>
         </div>
 
-        <a href={link} target="_blank" rel="noopener noreferrer" className="btn btn-primary buy-btn">
+        <Link to={`/product/${listing.id}`} className="btn btn-primary buy-btn">
           <span>View Deal</span>
           <ExternalLink size={16} />
-        </a>
+        </Link>
       </div>
     </div>
   );
