@@ -326,6 +326,12 @@
 .listings-table th {
     background: rgba(255,255,255,0.05);
     font-weight: 600;
+    /* Sticky header for scrolling */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #1a1a2e; /* Match dashboard background */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .listings-table a {
@@ -341,6 +347,11 @@
 .stat-card.info {
     background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(52, 152, 219, 0.05));
     border-color: rgba(52, 152, 219, 0.3);
+}
+
+.stat-card.brand {
+    background: linear-gradient(135deg, rgba(142, 68, 173, 0.2), rgba(142, 68, 173, 0.05));
+    border-color: rgba(142, 68, 173, 0.3);
 }
 
 /* Price Range in parts list */
@@ -369,17 +380,23 @@
 
 /* Action Buttons */
 .btn-delete {
-    background: transparent;
+    background: rgba(231, 76, 60, 0.15);
     border: 1px solid rgba(231, 76, 60, 0.3);
     color: #e74c3c;
-    padding: 4px 8px;
+    min-width: 36px;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 1rem;
+    transition: all 0.2s;
 }
 
 .btn-delete:hover {
-    background: rgba(231, 76, 60, 0.2);
+    background: rgba(231, 76, 60, 0.25);
+    transform: scale(1.05);
 }
 
 .btn-cleanup {
@@ -423,4 +440,190 @@
 }
 
 
+/* -- TanStack Table Styles -- */
 
+.table-controls {
+    margin-bottom: 20px;
+}
+
+.search-input {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    border-color: var(--color-primary);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.listings-table.sortable th {
+    cursor: pointer;
+    user-select: none;
+    /* Removed 'position: relative' - conflicts with sticky positioning */
+    padding-right: 24px; /* Space for sort icon */
+}
+
+.listings-table.sortable th:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-link {
+    background: rgba(52, 152, 219, 0.15);
+    color: #3498db;
+    min-width: 36px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    text-decoration: none !important;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-link:hover {
+    background: rgba(52, 152, 219, 0.25);
+    transform: scale(1.05);
+}
+
+.pagination {
+    display: flex;
+    align-items: center; /* Fixed: properly center all items */
+    justify-content: center;
+    gap: 16px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pagination button {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination button:not(:disabled):hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.pagination select {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
+}
+
+.pagination span {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
+}
+
+/* Filter Dropdown Styling */
+.filter-dropdown {
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: #1a1a2e;
+    color: white;
+    border: 1px solid #333;
+    min-width: 120px;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.filter-dropdown:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    background: rgba(52, 152, 219, 0.05);
+}
+
+.filter-dropdown:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Empty State Styling */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    opacity: 0.7;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .listings-section {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .listings-table {
+        min-width: 800px; /* Ensure table is wide enough to show all columns */
+    }
+
+    .stats-row {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+
+    .charts-row {
+        grid-template-columns: 1fr;
+    }
+
+    .pagination {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .filter-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .filter-bar select,
+    .filter-bar input {
+        width: 100% !important;
+        min-width: unset !important;
+    }
+}

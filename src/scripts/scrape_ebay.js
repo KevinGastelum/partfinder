@@ -55,6 +55,16 @@ async function scrapeEbay(query) {
         });
     });
 
+    // OPTIMIZATION: Block heavy resources (Images, Fonts, Styles)
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+        if (['image', 'stylesheet', 'font', 'media'].includes(req.resourceType())) {
+            req.abort();
+        } else {
+            req.continue();
+        }
+    });
+
     // Inject Cookies if available (Bypass CAPTCHA)
     const cookiesPath = path.join(__dirname, '../data/ebay_cookies.json');
     if (fs.existsSync(cookiesPath)) {
@@ -174,15 +184,46 @@ async function scrapeEbay(query) {
              const model = searchParts[2] || 'Unknown';
              const part_name = searchParts.slice(3).join(' ') || 'Car Part';
 
-            const processedItems = items.map(item => ({
-                ...item,
-                service_fee: (item.price * SERVICE_FEE_PERCENT).toFixed(2),
-                store: "eBay - " + item.store,
-                year,
-                make,
-                model,
-                part_name
-            }));
+            const processedItems = items.map(item => {
+                 let brand = 'Unknown';
+                 const titleUpper = item.title.toUpperCase();
+                 // Common brands list (synced with backfill logic)
+                 const KNOWN_BRANDS = [
+                    'DURALAST', 'BOSCH', 'NGK', 'DENSO', 'MOTORCRAFT', 'ACDELCO', 
+                    'VALUCRAFT', 'STP', 'MOBIL', 'K&N', 'FRAM', 'MOOG', 'BREMBO', 
+                    'WAGNER', 'TRW', 'MOPAR', 'MAGNAFLOW', 'FLOWMASTER', 'BORLA',
+                    'SYLVANIA', 'PHILIPS', 'ODYSSEY', 'OPTIMA', 'HONDA', 'TOYOTA', 
+                    'FORD', 'CHEVROLET', 'NISSAN', 'RAM', 'JEEP', 'DODGE'
+                 ];
+
+                 for (const known of KNOWN_BRANDS) {
+                     if (titleUpper.includes(known)) {
+                         brand = known.charAt(0) + known.slice(1).toLowerCase(); // Title case roughly
+                         if (brand === 'Acdecylco') brand = 'ACDelco'; // Fix specific casing if needed, relying on simple title case for now
+                         // actually let's just use the known string proper casing if we had it, 
+                         // but for now let's just use Title Case for simplicity or the matched string.
+                         // Better: Map known brands to proper casing.
+                         // But to keep it simple and consistent with backfill:
+                         brand = known.charAt(0) + known.slice(1).toLowerCase();
+                         // Fix common ones
+                         if (brand === 'Ngk') brand = 'NGK';
+                         if (brand === 'Oem') brand = 'OEM';
+                         if (brand === 'Stp') brand = 'STP';
+                         break;
+                     }
+                 }
+                 
+                 return {
+                    ...item,
+                    service_fee: (item.price * SERVICE_FEE_PERCENT).toFixed(2),
+                    store: "eBay - " + item.store,
+                    year,
+                    make,
+                    model,
+                    part_name,
+                    brand // Add the extracted brand
+                };
+            });
 
             allListings.push(...processedItems);
             console.log(`   ✅ Total items collected: ${allListings.length}`);
@@ -201,11 +242,11 @@ async function scrapeEbay(query) {
     if (allListings.length > 0) {
         const sqlValues = allListings.map(item => {
             const escape = (str) => str ? `'${str.replace(/'/g, "''")}'` : 'NULL';
-            return `(${escape(item.title)}, ${item.price}, ${item.service_fee}, ${escape(item.store)}, ${escape(item.condition)}, ${escape(item.image_url)}, ${escape(item.link)}, ${escape(item.year)}, ${escape(item.make)}, ${escape(item.model)}, ${escape(item.part_name)})`;
+            return `(${escape(item.title)}, ${item.price}, ${item.service_fee}, ${escape(item.store)}, ${escape(item.condition)}, ${escape(item.image_url)}, ${escape(item.link)}, ${escape(item.year)}, ${escape(item.make)}, ${escape(item.model)}, ${escape(item.part_name)}, ${escape(item.brand)})`;
         }).join(',\n');
 
         const sqlContent = `
-INSERT INTO public.listings (title, price, service_fee, store, condition, image_url, link, year, make, model, part_name)
+INSERT INTO public.listings (title, price, service_fee, store, condition, image_url, link, year, make, model, part_name, brand)
 VALUES
 ${sqlValues};
 `;

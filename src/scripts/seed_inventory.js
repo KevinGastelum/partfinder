@@ -74,35 +74,42 @@ async function runScraper(query) {
 
 async function main() {
     const totalJobs = VEHICLES.length * PARTS.length;
-    console.log("🚀 Starting Expanded Inventory Scrape...");
+    console.log("🚀 Starting Expanded Inventory Scrape (Optimized Mode)...");
     console.log(`Target: ${VEHICLES.length} Vehicles x ${PARTS.length} Parts = ${totalJobs} Queries`);
+    console.log(`Mode: Parallel Batches (Speed x3)`);
     console.log(`Estimated Items: ~${totalJobs * 100} listings\n`);
     
-    let count = 1;
+    // Create job queue
+    const queue = [];
+    let id = 1;
     for (const vehicle of VEHICLES) {
         for (const part of PARTS) {
-            const query = `${vehicle} ${part}`;
-            console.log(`\n${'='.repeat(60)}`);
-            console.log(`Job ${count}/${totalJobs}: ${query}`);
-            console.log(`${'='.repeat(60)}`);
-            
-            await runScraper(query);
-            
-            // Cool down between jobs (be nice to eBay)
-            console.log("Waiting 5 seconds before next job...");
-            await new Promise(r => setTimeout(r, 5000));
-            count++;
+            queue.push({ id: id++, query: `${vehicle} ${part}` });
         }
+    }
+
+    // Process in batches
+    const BATCH_SIZE = 3;
+    
+    for (let i = 0; i < queue.length; i += BATCH_SIZE) {
+        const batch = queue.slice(i, i + BATCH_SIZE);
+        console.log(`\n${'='.repeat(60)}`);
+        console.log(`⚡ Processing Batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(queue.length/BATCH_SIZE)}`);
+        console.log(`   Detailed Jobs: ${batch.map(b => `#${b.id}`).join(', ')}`);
+        console.log(`${'='.repeat(60)}`);
+
+        // Run batch in parallel
+        await Promise.all(batch.map(job => runScraper(job.query)));
         
-        // Longer break between vehicles
-        console.log(`\n💤 Finished ${vehicle}. Taking 10 second break...\n`);
-        await new Promise(r => setTimeout(r, 10000));
+        // Dynamic cool down between batches
+        const delay = Math.floor(Math.random() * 5000) + 3000; // 3-8 seconds
+        console.log(`💤 Batch complete. Cooling down for ${delay/1000}s...`);
+        await new Promise(r => setTimeout(r, delay));
     }
     
     console.log("\n" + "=".repeat(60));
     console.log("✨ All Jobs Complete!");
     console.log(`Total Queries: ${totalJobs}`);
-    console.log(`Estimated Items Added: ~${totalJobs * 100}`);
     console.log("=".repeat(60));
 }
 
