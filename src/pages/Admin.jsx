@@ -33,6 +33,7 @@ export default function Admin() {
   // -- Server-Side Aggregates (Full Dataset) --
   const [aggregates, setAggregates] = useState({
     vehicles: [], // [{name, count}]
+    models: [],   // NEW: [{name, count}]
     parts: [],    // [{name, count}]
     years: [],    // [{name, count}]
   });
@@ -52,6 +53,7 @@ export default function Admin() {
   
   // Interactive Card Filters (for cross-filtering aggregate cards)
   const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [selectedModel, setSelectedModel] = useState(null); // NEW
   const [selectedPart, setSelectedPart] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
   const [showOutliersOnly, setShowOutliersOnly] = useState(false);
@@ -98,8 +100,8 @@ export default function Admin() {
   useEffect(() => {
     if (!session || activeTab !== 'inventory') return;
     setPageIndex(0); // Reset to first page when filters change
-    fetchInventory(0, pageSize, { year: filterYear || selectedYear, make: filterMake || selectedVehicle, part: filterPart || selectedPart, search: searchQuery });
-  }, [filterYear, filterMake, filterPart, selectedVehicle, selectedPart, selectedYear, searchQuery]);
+    fetchInventory(0, pageSize, { year: filterYear || selectedYear, make: filterMake || selectedVehicle, model: selectedModel, part: filterPart || selectedPart, search: searchQuery });
+  }, [filterYear, filterMake, filterPart, selectedVehicle, selectedModel, selectedPart, selectedYear, searchQuery]);
 
   const fetchOrders = async () => {
     try {
@@ -153,9 +155,9 @@ export default function Admin() {
       };
 
       // Fetch all unique values for each column
-      // IMPORTANT: Fetch ALL rows with make, part_name, AND year together for cross-filtering
+      // IMPORTANT: Fetch ALL rows with make, model, part_name, AND year together for cross-filtering
       const [allRowsData] = await Promise.all([
-        fetchAllRows('make, part_name, year')
+        fetchAllRows('make, model, part_name, year')
       ]);
       
       // Extract individual columns from the full dataset
@@ -167,6 +169,9 @@ export default function Admin() {
       const makeCounts = {};
       makeData?.forEach(r => { if (r.make) makeCounts[r.make] = (makeCounts[r.make] || 0) + 1; });
       
+      const modelCounts = {};
+      allRowsData?.forEach(r => { if (r.model) modelCounts[r.model] = (modelCounts[r.model] || 0) + 1; });
+
       const partCounts = {};
       partData?.forEach(r => { if (r.part_name) partCounts[r.part_name] = (partCounts[r.part_name] || 0) + 1; });
       
@@ -175,6 +180,7 @@ export default function Admin() {
       
       setAggregates({
         vehicles: Object.entries(makeCounts).map(([name, count]) => ({name, count})).sort((a,b) => b.count - a.count).slice(0, 20),
+        models: Object.entries(modelCounts).map(([name, count]) => ({name, count})).sort((a,b) => b.count - a.count).slice(0, 20),
         parts: Object.entries(partCounts).map(([name, count]) => ({name, count})).sort((a,b) => b.count - a.count),
         years: Object.entries(yearCounts).map(([name, count]) => ({name, count})).sort((a,b) => Number(a.name) - Number(b.name)),
       });
@@ -214,6 +220,9 @@ export default function Admin() {
       }
       if (filters.make || filterMake || selectedVehicle) {
         query = query.eq('make', filters.make || filterMake || selectedVehicle);
+      }
+      if (selectedModel) {
+        query = query.eq('model', selectedModel);
       }
       if (filters.part || filterPart || selectedPart) {
         query = query.eq('part_name', filters.part || filterPart || selectedPart);
@@ -260,7 +269,7 @@ export default function Admin() {
   // Cross-filtered aggregates for interactive cards
   const filteredAggregates = useMemo(() => {
     // If no card filter is active, return full aggregates
-    if (!selectedVehicle && !selectedPart && !selectedYear) {
+    if (!selectedVehicle && !selectedModel && !selectedPart && !selectedYear) {
       return aggregates;
     }
 
@@ -271,30 +280,43 @@ export default function Admin() {
 
     // Filter the raw data based on selections
     let filteredMakes = makeData;
+    let filteredModels = makeData; // Uses same dataset
     let filteredParts = partData;
     let filteredYears = yearData;
 
     if (selectedVehicle) {
       // Filter parts and years to only those with selected vehicle
+      filteredModels = makeData.filter(row => row.make === selectedVehicle);
       filteredParts = partData.filter(row => row.make === selectedVehicle);
       filteredYears = yearData.filter(row => row.make === selectedVehicle);
+    }
+    
+    if (selectedModel) {
+        filteredMakes = makeData.filter(row => row.model === selectedModel);
+        filteredParts = partData.filter(row => row.model === selectedModel);
+        filteredYears = yearData.filter(row => row.model === selectedModel);
     }
 
     if (selectedPart) {
       // Filter makes and years to only those with selected part
       filteredMakes = makeData.filter(row => row.part_name === selectedPart);
+      filteredModels = makeData.filter(row => row.part_name === selectedPart);
       filteredYears = yearData.filter(row => row.part_name === selectedPart);
     }
 
     if (selectedYear) {
       // Filter makes and parts to only those with selected year
       filteredMakes = makeData.filter(row => row.year === selectedYear);
+      filteredModels = makeData.filter(row => row.year === selectedYear);
       filteredParts = partData.filter(row => row.year === selectedYear);
     }
 
     // Count occurrences
     const makeCounts = {};
     filteredMakes.forEach(r => { makeCounts[r.make] = (makeCounts[r.make] || 0) + 1; });
+
+    const modelCounts = {};
+    filteredModels.forEach(r => { if(r.model) modelCounts[r.model] = (modelCounts[r.model] || 0) + 1; });
 
     const partCounts = {};
     filteredParts.forEach(r => { partCounts[r.part_name] = (partCounts[r.part_name] || 0) + 1; });
@@ -304,10 +326,11 @@ export default function Admin() {
 
     return {
       vehicles: Object.entries(makeCounts).map(([name, count]) => ({name, count})).sort((a,b) => b.count - a.count).slice(0, 20),
+      models: Object.entries(modelCounts).map(([name, count]) => ({name, count})).sort((a,b) => b.count - a.count).slice(0, 20),
       parts: Object.entries(partCounts).map(([name, count]) => ({name, count})).sort((a,b) => b.count - a.count),
       years: Object.entries(yearCounts).map(([name, count]) => ({name, count})).sort((a,b) => Number(a.name) - Number(b.name)),
     };
-  }, [aggregates, fullAggregateData, selectedVehicle, selectedPart, selectedYear]);
+  }, [aggregates, fullAggregateData, selectedVehicle, selectedModel, selectedPart, selectedYear]);
 
   // Delete duplicates (keep one, delete rest)
   const deleteDuplicates = async (title) => {
@@ -709,24 +732,30 @@ export default function Admin() {
       )}
 
       {/* Filter Breadcrumb */}
-      {(selectedVehicle || selectedPart || selectedYear || showOutliersOnly) && (
+      {(selectedVehicle || selectedModel || selectedPart || selectedYear || showOutliersOnly) && (
         <div className="filter-breadcrumb">
           <span>Filters: </span>
-          {selectedVehicle && <span className="filter-tag" onClick={() => { setSelectedVehicle(null); setSelectedPart(null); }}>🚗 {selectedVehicle} ✕</span>}
+          {selectedVehicle && <span className="filter-tag" onClick={() => { setSelectedVehicle(null); setSelectedModel(null); }}>🚗 {selectedVehicle} ✕</span>}
+          {selectedModel && <span className="filter-tag" onClick={() => setSelectedModel(null)}>🚘 {selectedModel} ✕</span>}
           {selectedPart && <span className="filter-tag" onClick={() => setSelectedPart(null)}>🔧 {selectedPart} ✕</span>}
           {selectedYear && <span className="filter-tag" onClick={() => setSelectedYear(null)}>🗓️ {selectedYear} ✕</span>}
           {showOutliersOnly && <span className="filter-tag" onClick={() => setShowOutliersOnly(false)}>🚨 Outliers Only ✕</span>}
-          <button className="clear-filters" onClick={() => { setSelectedVehicle(null); setSelectedPart(null); setSelectedYear(null); setShowOutliersOnly(false); }}>Clear All</button>
+          <button className="clear-filters" onClick={() => { setSelectedVehicle(null); setSelectedModel(null); setSelectedPart(null); setSelectedYear(null); setShowOutliersOnly(false); }}>Clear All</button>
         </div>
       )}
 
       {/* Interactive Card Filter Context Bar */}
-      {(selectedVehicle || selectedPart || selectedYear) && (
+      {(selectedVehicle || selectedModel || selectedPart || selectedYear) && (
         <div className="filter-context-bar" style={{display:'flex', alignItems:'center', gap:'12px', padding:'16px', background:'rgba(52, 152, 219, 0.1)', border:'1px solid rgba(52, 152, 219, 0.3)', borderRadius:'12px', marginBottom:'20px'}}>
           <span style={{fontWeight:'600', fontSize:'0.95rem'}}>📊 Dashboard Filtered By:</span>
           {selectedVehicle && (
             <span className="filter-badge" style={{background:'var(--color-primary)', color:'white', padding:'6px 12px', borderRadius:'16px', fontSize:'0.9rem', cursor:'pointer'}} onClick={() => setSelectedVehicle(null)}>
               Make: {selectedVehicle} ✕
+            </span>
+          )}
+          {selectedModel && (
+            <span className="filter-badge" style={{background:'#e67e22', color:'white', padding:'6px 12px', borderRadius:'16px', fontSize:'0.9rem', cursor:'pointer'}} onClick={() => setSelectedModel(null)}>
+              Model: {selectedModel} ✕
             </span>
           )}
           {selectedPart && (
@@ -739,7 +768,7 @@ export default function Admin() {
               Year: {selectedYear} ✕
             </span>
           )}
-          <button onClick={() => { setSelectedVehicle(null); setSelectedPart(null); setSelectedYear(null); }} style={{marginLeft:'auto', padding:'8px 16px', background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.2)', borderRadius:'8px', color:'white', cursor:'pointer'}}>
+          <button onClick={() => { setSelectedVehicle(null); setSelectedModel(null); setSelectedPart(null); setSelectedYear(null); }} style={{marginLeft:'auto', padding:'8px 16px', background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.2)', borderRadius:'8px', color:'white', cursor:'pointer'}}>
             Clear Dashboard Filters
           </button>
         </div>
@@ -769,6 +798,28 @@ export default function Admin() {
           </ul>
         </div>
         
+        <div className="chart-card">
+          <h3>By Model {selectedModel && <span style={{fontSize:'0.8rem', opacity:0.7}}>(\u2714 Filtered)</span>}</h3>
+          <ul className="stat-list clickable">
+             {filteredAggregates.models.slice(0, 10).map(stat => (
+              <li 
+                key={stat.name}
+                onClick={() => setSelectedModel(selectedModel === stat.name ? null : stat.name)}
+                style={{
+                  background: selectedModel === stat.name ? 'rgba(230, 126, 34, 0.2)' : 'transparent',
+                  borderLeft: selectedModel === stat.name ? '3px solid #e67e22' : 'none',
+                  paddingLeft: selectedModel === stat.name ? '12px' : '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                <div className="bar model-bar" style={{width: `${(stat.count / (filteredAggregates.models[0]?.count || 1)) * 100}%`, background: '#e67e22'}}></div>
+                <span className="label" title={stat.name}>{stat.name.substring(0, 20)}</span>
+                <span className="count">{stat.count.toLocaleString()}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         <div className="chart-card">
           <h3>By Part {selectedPart && <span style={{fontSize:'0.8rem', opacity:0.7}}>(\u2714 Filtered)</span>}</h3>
           <ul className="stat-list clickable">

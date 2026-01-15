@@ -7,19 +7,24 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const SCRAPER_SCRIPT = path.join(__dirname, 'scrape_ebay.js');
 
-// Tier 1 Vehicles (Top 10 US Sellers) - Years 2008-2023
-const VEHICLES = [
-    "2012 Ford F-150",
-    "2015 Chevrolet Silverado",
-    "2014 RAM 1500",
-    "2018 Toyota RAV4",
-    "2016 Honda CR-V",
-    "2017 Toyota Camry",
-    "2019 Honda Civic",
-    "2020 Nissan Rogue",
-    "2015 Chevrolet Equinox",
-    "2018 Toyota Corolla"
+
+// Tier 1 Vehicle Models (Top US Sellers)
+const MODELS = [
+    { make: "Ford", model: "F-150" },
+    { make: "Chevrolet", model: "Silverado" },
+    { make: "RAM", model: "1500" },
+    { make: "Toyota", model: "RAV4" },
+    { make: "Honda", model: "CR-V" },
+    { make: "Toyota", model: "Camry" },
+    { make: "Honda", model: "Civic" },
+    { make: "Nissan", model: "Rogue" },
+    { make: "Chevrolet", model: "Equinox" },
+    { make: "Toyota", model: "Corolla" }
 ];
+
+// Target Years: 2008 - 2023 (16 Years)
+const START_YEAR = 2008;
+const END_YEAR = 2023;
 
 // Priority 1 Parts (High Demand / Frequent Replacement)
 const PARTS = [
@@ -46,11 +51,12 @@ const PARTS = [
     "CV Axle"
 ];
 
-async function runScraper(query) {
+async function runScraper(query, useRockAuto = false) {
     return new Promise((resolve, reject) => {
-        console.log(`\n📦 Orchestrator: Queuing scrape for "${query}"...`);
+        const scriptToRun = useRockAuto ? 'src/scripts/scrape_rockauto_wrapper.js' : SCRAPER_SCRIPT;
+        console.log(`\n📦 Orchestrator: Queuing scrape for "${query}" using ${useRockAuto ? 'RockAuto' : 'eBay'}...`);
         
-        const child = spawn('node', [SCRAPER_SCRIPT, `"${query}"`], {
+        const child = spawn('node', [scriptToRun, `"${query}"`], {
             stdio: 'inherit',
             shell: true
         });
@@ -73,36 +79,54 @@ async function runScraper(query) {
 }
 
 async function main() {
-    const totalJobs = VEHICLES.length * PARTS.length;
+    // Generate Year + Make + Model combinations
+    const VEHICLE_QUERIES = [];
+    
+    for (const car of MODELS) {
+        for (let year = START_YEAR; year <= END_YEAR; year++) {
+            VEHICLE_QUERIES.push(`${year} ${car.make} ${car.model}`);
+        }
+    }
+    
+    const totalJobs = VEHICLE_QUERIES.length * PARTS.length;
     console.log("🚀 Starting Expanded Inventory Scrape (Optimized Mode)...");
-    console.log(`Target: ${VEHICLES.length} Vehicles x ${PARTS.length} Parts = ${totalJobs} Queries`);
+    console.log(`Target: ${MODELS.length} Models x ${END_YEAR - START_YEAR + 1} Years (${START_YEAR}-${END_YEAR})`);
+    console.log(`Total Vehicles: ${VEHICLE_QUERIES.length}`);
+    console.log(`Parts per Vehicle: ${PARTS.length}`);
+    console.log(`Total Jobs: ${totalJobs} Queries`);
     console.log(`Mode: Parallel Batches (Speed x3)`);
     console.log(`Estimated Items: ~${totalJobs * 100} listings\n`);
     
     // Create job queue
     const queue = [];
     let id = 1;
-    for (const vehicle of VEHICLES) {
+    for (const vehicle of VEHICLE_QUERIES) {
         for (const part of PARTS) {
             queue.push({ id: id++, query: `${vehicle} ${part}` });
         }
     }
 
     // Process in batches
-    const BATCH_SIZE = 3;
+    const BATCH_SIZE = 6; // Increased from 3
     
+    // Choose Scraper based on user input or random
+    const USE_ROCKAUTO = process.argv.includes('--rockauto');
+    const SCRAPER_CMD = USE_ROCKAUTO ? 'src/scripts/scrape_rockauto_wrapper.js' : SCRAPER_SCRIPT; 
+    
+    if (USE_ROCKAUTO) console.log("🌟 Source: RockAuto (Experimental)");
+
     for (let i = 0; i < queue.length; i += BATCH_SIZE) {
         const batch = queue.slice(i, i + BATCH_SIZE);
         console.log(`\n${'='.repeat(60)}`);
         console.log(`⚡ Processing Batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(queue.length/BATCH_SIZE)}`);
-        console.log(`   Detailed Jobs: ${batch.map(b => `#${b.id}`).join(', ')}`);
+        console.log(`   Detailed Jobs: ${batch.map(b => `#${b.id} ${b.query}`).join('\n                  ')}`);
         console.log(`${'='.repeat(60)}`);
 
         // Run batch in parallel
-        await Promise.all(batch.map(job => runScraper(job.query)));
+        await Promise.all(batch.map(job => runScraper(job.query, USE_ROCKAUTO)));
         
         // Dynamic cool down between batches
-        const delay = Math.floor(Math.random() * 5000) + 3000; // 3-8 seconds
+        const delay = Math.floor(Math.random() * 3000) + 2000; // 2-5 seconds (Reduced)
         console.log(`💤 Batch complete. Cooling down for ${delay/1000}s...`);
         await new Promise(r => setTimeout(r, delay));
     }
