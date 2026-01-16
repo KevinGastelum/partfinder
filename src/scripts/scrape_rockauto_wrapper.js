@@ -1,5 +1,5 @@
 // Wrapper to call RockAuto Scraper from CLI
-const { scrapeRockAuto } = require('../scrapers/rockauto_scraper');
+import { scrapeRockAuto } from '../scrapers/rockauto_scraper.js';
 
 const query = process.argv[2];
 if (query) {

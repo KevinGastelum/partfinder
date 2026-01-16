@@ -1,8 +1,13 @@
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-const { createClient } = require('@supabase/supabase-js');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import { createClient } from '@supabase/supabase-js';
+import path from 'path';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 puppeteer.use(StealthPlugin());
 
@@ -11,7 +16,7 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function scrapeRockAuto(query) {
+export async function scrapeRockAuto(query) {
     let browser;
     try {
         console.log(`\n🔍 [RockAuto] Starting scrape for: "${query}"`);
@@ -133,9 +138,7 @@ async function scrapeRockAuto(query) {
 }
 
 // Allow CLI run
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const query = process.argv[2] || "2012 Ford F-150 Alternator";
     scrapeRockAuto(query);
 }
-
-module.exports = { scrapeRockAuto };

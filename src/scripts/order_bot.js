@@ -68,35 +68,65 @@ async function processOrder(order) {
     // END REFINEMENT
 
     // 4. Click "Buy It Now" or "Add to Cart"
-    // Heuristic: Look for common eBay buttons
-    const buyButtonSelectors = [
-      'a[id^="binBtn_btn"]', // Robust: Matches binBtn_btn, binBtn_btn_1, etc.
-      'a[data-testid="binBtn_btn"]',
-      '#binBtn_btn',
-      '.x-bin-action a' // Fallback class based selector
-    ];
-    
     let clicked = false;
-    for (const selector of buyButtonSelectors) {
-      if (await page.$(selector)) {
-        console.log(`[Order ${order.id}] Found Buy Button: ${selector}`);
+
+    // --- ROCKAUTO LOGIC ---
+    if (listing.link.includes('rockauto.com')) {
+        console.log(`[Order ${order.id}] Detected RockAuto Listing.`);
+        // RockAuto typically uses inputs inside a form table
+        // We look for the "Add to Cart" button row corresponding to our part
+        // Since we are landing on a specific search page, we might need to find the specific part again?
+        // Or if the link is a direct "More Info" page.
+        // For JIT Scout, we link to the Search Results. 
+        // Heuristic: Find the button closest to our price? Or just the first one?
         
-        // Revised Navigation Logic: Click and wait for key elements instead of generic network idle
-        await page.click(selector);
-        console.log(`[Order ${order.id}] Clicked. Waiting for navigation...`);
-        
-        try {
-            // Wait for either a Sign In field, Guest Checkout, or a Checkout container
-            await page.waitForSelector('#userid, #gxo-btn, .guest-checkout, .cart-summary, #mainContent, input[name="username"]', {
-                timeout: 10000 
-            });
-        } catch (e) {
-            console.log(`[Order ${order.id}] Warning: Navigation timeout or selector not found. Proceeding to screenshot check.`);
+        // Simple heuristic: Click the first available "Add to Cart"
+        const raSelectors = [
+            'input[value^="Add to Cart"]',
+            'button[aria-label="Add to Cart"]',
+            '.ra-add-to-cart'
+        ];
+
+        for (const sel of raSelectors) {
+            if (await page.$(sel)) {
+                await page.click(sel);
+                console.log(`[Order ${order.id}] Clicked RockAuto Add to Cart (${sel})`);
+                clicked = true;
+                break;
+            }
         }
+    } 
+    // --- EBAY LOGIC ---
+    else {
+        // Heuristic: Look for common eBay buttons
+        const buyButtonSelectors = [
+          'a[id^="binBtn_btn"]', // Robust: Matches binBtn_btn, binBtn_btn_1, etc.
+          'a[data-testid="binBtn_btn"]',
+          '#binBtn_btn',
+          '.x-bin-action a' // Fallback class based selector
+        ];
         
-        clicked = true;
-        break;
-      }
+        for (const selector of buyButtonSelectors) {
+          if (await page.$(selector)) {
+            console.log(`[Order ${order.id}] Found Buy Button: ${selector}`);
+            
+            // Revised Navigation Logic: Click and wait for key elements instead of generic network idle
+            await page.click(selector);
+            console.log(`[Order ${order.id}] Clicked. Waiting for navigation...`);
+            
+            try {
+                // Wait for either a Sign In field, Guest Checkout, or a Checkout container
+                await page.waitForSelector('#userid, #gxo-btn, .guest-checkout, .cart-summary, #mainContent, input[name="username"]', {
+                    timeout: 10000 
+                });
+            } catch (e) {
+                console.log(`[Order ${order.id}] Warning: Navigation timeout or selector not found. Proceeding to screenshot check.`);
+            }
+            
+            clicked = true;
+            break;
+          }
+        }
     }
 
     if (!clicked) {

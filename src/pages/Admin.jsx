@@ -620,6 +620,38 @@ export default function Admin() {
 
   const renderInventory = () => (
     <div className="inventory-dashboard">
+      {/* Header Actions */}
+      <div style={{display:'flex', justifyContent:'flex-end', marginBottom:'1rem'}}>
+          <button 
+            onClick={() => {
+                const csvContent = "data:text/csv;charset=utf-8," 
+                    + ["id,title,price,make,model,year,brand,part_name,source,link"].join(",") + "\n"
+                    + allListings.map(e => [
+                        e.id,
+                        `"${(e.title||'').replace(/"/g, '""')}"`, // Escape quotes
+                        e.price,
+                        e.make,
+                        e.model,
+                        e.year,
+                        e.brand || detectBrand(e.title),
+                        e.part_name,
+                        e.source,
+                        e.link
+                    ].join(",")).join("\n");
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `inventory_export_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+            }}
+            className="btn-secondary"
+            style={{padding:'8px 16px', background:'#27ae60', color:'white', border:'none', borderRadius:'6px', cursor:'pointer', display:'flex', alignItems:'center', gap:'8px'}}
+          >
+            📥 Export to CSV
+          </button>
+      </div>
+
       {/* Server-Side Filter Bar */}
       <div className="filter-bar" style={{display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px'}}>
         <select 

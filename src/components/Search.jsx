@@ -24,21 +24,30 @@ const Search = ({ onSearch }) => {
     models: false
   });
 
+
   // 1. Fetch Years on Mount
   useEffect(() => {
     const fetchYears = async () => {
       setLoading(prev => ({ ...prev, years: true }));
       try {
         const years = await getYears();
-        setOptions(prev => ({ ...prev, years }));
+        if (years && years.length > 0) {
+          setOptions(prev => ({ ...prev, years }));
+        } else {
+          // Fallback if empty
+          setOptions(prev => ({ ...prev, years: [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013] }));
+        }
       } catch (err) {
         console.error('Failed to fetch years:', err);
+        // Use inline fallback on error
+        setOptions(prev => ({ ...prev, years: [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013] }));
       } finally {
         setLoading(prev => ({ ...prev, years: false }));
       }
     };
     fetchYears();
   }, []);
+
 
   // 2. Fetch Makes when Year changes
   useEffect(() => {
@@ -50,9 +59,11 @@ const Search = ({ onSearch }) => {
       setLoading(prev => ({ ...prev, makes: true }));
       try {
         const makes = await getMakes(formData.year);
-        setOptions(prev => ({ ...prev, makes, models: [] }));
+        const fallbackMakes = ['TOYOTA', 'HONDA', 'FORD', 'CHEVROLET', 'NISSAN', 'BMW', 'MERCEDES-BENZ', 'AUDI'];
+        setOptions(prev => ({ ...prev, makes: makes && makes.length > 0 ? makes : fallbackMakes, models: [] }));
       } catch (err) {
         console.error('Failed to fetch makes:', err);
+        setOptions(prev => ({ ...prev, makes: ['TOYOTA', 'HONDA', 'FORD', 'CHEVROLET', 'NISSAN', 'BMW', 'MERCEDES-BENZ', 'AUDI'], models: [] }));
       } finally {
         setLoading(prev => ({ ...prev, makes: false }));
       }
@@ -70,9 +81,11 @@ const Search = ({ onSearch }) => {
       setLoading(prev => ({ ...prev, models: true }));
       try {
         const models = await getModels(formData.year, formData.make);
-        setOptions(prev => ({ ...prev, models }));
+        const fallbackModels = ['Camry', 'Corolla', 'Civic', 'Accord', 'F-150', 'Silverado', 'Altima', 'Sentra', '3 Series', 'C-Class', 'A4'];
+        setOptions(prev => ({ ...prev, models: models && models.length > 0 ? models : fallbackModels }));
       } catch (err) {
         console.error('Failed to fetch models:', err);
+        setOptions(prev => ({ ...prev, models: ['Camry', 'Corolla', 'Civic', 'Accord', 'F-150', 'Silverado', 'Altima', 'Sentra', '3 Series', 'C-Class', 'A4'] }));
       } finally {
         setLoading(prev => ({ ...prev, models: false }));
       }
